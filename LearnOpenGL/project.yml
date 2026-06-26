@@ -41,8 +41,9 @@ targets:
           - "$(SRCROOT)/LearnOpenGL/Core"
           - "$(SRCROOT)/LearnOpenGL/Exercises"
         PRODUCT_BUNDLE_IDENTIFIER: sharexia.LearnOpenGL
-        DEVELOPMENT_TEAM: UG4W2B7XPD
-        CODE_SIGN_STYLE: Automatic
+        # 本地 ad-hoc 签名：不绑定任何开发者账号，任意机器都能直接编译运行（学习用、不分发）
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
         MARKETING_VERSION: "1.0"
         CURRENT_PROJECT_VERSION: 1
         GENERATE_INFOPLIST_FILE: true
@@ -52,7 +53,6 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         COMBINE_HIDPI_IMAGES: true
-        ENABLE_HARDENED_RUNTIME: true
         LD_RUNPATH_SEARCH_PATHS:
           - "$(inherited)"
           - "@executable_path/../Frameworks"

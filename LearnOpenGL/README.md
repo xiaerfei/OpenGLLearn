@@ -8,20 +8,24 @@
 
 ## 构建与运行
 
-工程由 [XcodeGen](https://github.com/yonaskolb/XcodeGen) 管理，改完结构后重新生成即可（不用手动维护 `.xcodeproj`）：
+工程由 [XcodeGen](https://github.com/yonaskolb/XcodeGen) 从 `project.yml` 生成，`.xcodeproj` 不入库。
+全新 clone 后一键生成并打开（脚本会在缺失时自动用 Homebrew 装好 XcodeGen）：
 
 ```bash
-brew install xcodegen        # 仅首次
 cd LearnOpenGL
-xcodegen generate            # 增删源文件 / 改设置后执行
-open LearnOpenGL.xcodeproj    # 在 Xcode 里 Run
+./bootstrap.sh        # 装/调用 XcodeGen → 生成工程 → 打开 Xcode，按 ⌘R 运行
 ```
 
-命令行构建（无签名，本地跑）：
+之后增删源文件或改了 `project.yml`，重新生成即可：
 
 ```bash
-xcodebuild -project LearnOpenGL.xcodeproj -scheme LearnOpenGL \
-  -configuration Debug CODE_SIGNING_ALLOWED=NO build
+xcodegen generate
+```
+
+命令行构建（采用本地 ad-hoc 签名，无需任何开发者账号）：
+
+```bash
+xcodebuild -project LearnOpenGL.xcodeproj -scheme LearnOpenGL -configuration Debug build
 ```
 
 ## 操作
