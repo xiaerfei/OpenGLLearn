@@ -25,6 +25,10 @@ targets:
     deploymentTarget: "26.2"
     sources:
       - path: LearnOpenGL
+      # 着色器以文件夹引用打入 bundle，运行时按 Shaders/<名字>.vert/.frag 加载
+      - path: Shaders
+        type: folder
+        buildPhase: resources
     dependencies:
       - sdk: OpenGL.framework
       - sdk: CoreVideo.framework

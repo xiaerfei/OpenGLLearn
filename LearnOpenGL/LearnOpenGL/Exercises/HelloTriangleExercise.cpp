@@ -5,37 +5,9 @@
 
 #include "HelloTriangleExercise.hpp"
 
+#include "ShaderLibrary.hpp"
+
 namespace {
-
-// 顶点着色器：接收位置(location=0)与颜色(location=1)，经 MVP 变换后输出裁剪空间坐标。
-// 对照原教程：原版只有 `gl_Position = vec4(aPos, 1.0);`，这里多乘了相机矩阵。
-const char* kVertexSrc = R"(
-#version 410 core
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aColor;
-
-uniform mat4 uModel;
-uniform mat4 uView;
-uniform mat4 uProjection;
-
-out vec3 vColor;
-
-void main() {
-    vColor = aColor;
-    gl_Position = uProjection * uView * uModel * vec4(aPos, 1.0);
-}
-)";
-
-// 片段着色器：直接输出插值后的顶点颜色。
-const char* kFragmentSrc = R"(
-#version 410 core
-in vec3 vColor;
-out vec4 FragColor;
-
-void main() {
-    FragColor = vec4(vColor, 1.0);
-}
-)";
 
 // 一个三角形：每个顶点 = 位置(x,y,z) + 颜色(r,g,b)。放在世界原点的 XY 平面上。
 const float kVertices[] = {
@@ -48,7 +20,7 @@ const float kVertices[] = {
 } // namespace
 
 void HelloTriangleExercise::setup() {
-    shader_.compile(kVertexSrc, kFragmentSrc);
+    loadShader(shader_, "hello_triangle"); // Shaders/hello_triangle.vert + .frag
 
     // ---- 以下 VAO/VBO 设置与 learnopengl-cn 原教程一致 ----
     glGenVertexArrays(1, &vao_);

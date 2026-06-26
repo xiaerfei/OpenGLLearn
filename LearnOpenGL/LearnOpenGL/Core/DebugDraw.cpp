@@ -5,33 +5,10 @@
 
 #include "DebugDraw.hpp"
 
+#include "ShaderLibrary.hpp"
+
 #include <glm/gtc/matrix_transform.hpp>
 #include <cstddef>
-
-namespace {
-
-const char* kLineVS = R"(
-#version 410 core
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aColor;
-uniform mat4 uViewProj;
-out vec3 vColor;
-void main() {
-    vColor = aColor;
-    gl_Position = uViewProj * vec4(aPos, 1.0);
-}
-)";
-
-const char* kLineFS = R"(
-#version 410 core
-in vec3 vColor;
-out vec4 FragColor;
-void main() {
-    FragColor = vec4(vColor, 1.0);
-}
-)";
-
-} // namespace
 
 DebugDraw::~DebugDraw() {
     if (vbo_) glDeleteBuffers(1, &vbo_);
@@ -39,7 +16,7 @@ DebugDraw::~DebugDraw() {
 }
 
 void DebugDraw::setup() {
-    shader_.compile(kLineVS, kLineFS);
+    loadShader(shader_, "line"); // Shaders/line.vert + .frag
 
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);

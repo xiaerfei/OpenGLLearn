@@ -41,11 +41,17 @@ xcodebuild -project LearnOpenGL.xcodeproj -scheme LearnOpenGL -configuration Deb
 ```
 LearnOpenGL/
 ├── project.yml                 # XcodeGen 配置（唯一工程来源）
+├── bootstrap.sh                # 一键生成工程并打开
 ├── ThirdParty/glm/             # vendored glm（-isystem 引入）
+├── Shaders/                    # ★ GLSL 着色器（打入 bundle，运行时加载）
+│   ├── hello_triangle.vert/.frag
+│   ├── cube.vert/.frag
+│   └── line.vert/.frag         # DebugDraw 用
 └── LearnOpenGL/
     ├── Core/                   # 可复用底层组件，写练习时一般不用动
     │   ├── GLView.{h,mm}       # 4.1 Core 上下文 + 渲染循环 + 输入
-    │   ├── Shader.{hpp,cpp}    # 着色器编译/链接/uniform
+    │   ├── Shader.{hpp,cpp}    # 着色器编译/链接/uniform（纯 C++）
+    │   ├── ShaderLibrary.{hpp,mm}  # 从 bundle Shaders/ 加载着色器文件
     │   ├── Mesh.{hpp,cpp}      # VAO/VBO/EBO 封装 + 内置图元
     │   ├── Camera.{hpp,cpp}    # 透视相机
     │   ├── OrbitCamera.{hpp,cpp}        # 观察者轨道相机
@@ -72,9 +78,12 @@ LearnOpenGL/
 
    在 `setup()` 里顺便设好 `sceneCamera`（位置/朝向）—— 左侧观察者会自动画出它的视锥体。
 
-2. 在 `ExerciseRegistry.cpp` 里 `#include` 你的头文件，并往列表加一行 `{"名称", 工厂}`。
+2. 在 `Shaders/` 放着色器文件（如 `xxx.vert` / `xxx.frag`），在 `setup()` 里用
+   `loadShader(shader_, "xxx")` 加载（会自动找 `Shaders/xxx.vert` + `.frag`）。
 
-3. `xcodegen generate` 重新生成，运行后用数字键切到你的练习。
+3. 在 `ExerciseRegistry.cpp` 里 `#include` 你的头文件，并往列表加一行 `{"名称", 工厂}`。
+
+4. `xcodegen generate` 重新生成，运行后用下拉框或数字键切到你的练习。
 
 > 对照 learnopengl-cn 写代码时，几乎可以 1:1 照抄网站的 C++（glm + GLSL）；
 > 唯一约定：物体放进世界空间、在 `render` 里用传入的 `camera` 的 `view()/projection()` 变换，

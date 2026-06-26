@@ -5,51 +5,13 @@
 
 #include "CubeExercise.hpp"
 
+#include "ShaderLibrary.hpp"
+
 #include <glm/gtc/matrix_transform.hpp>
-
-namespace {
-
-const char* kVertexSrc = R"(
-#version 410 core
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aNormal;
-layout (location = 2) in vec3 aColor;
-
-uniform mat4 uModel;
-uniform mat4 uView;
-uniform mat4 uProjection;
-
-out vec3 vNormal;
-out vec3 vColor;
-
-void main() {
-    vNormal = mat3(uModel) * aNormal;
-    vColor = aColor;
-    gl_Position = uProjection * uView * uModel * vec4(aPos, 1.0);
-}
-)";
-
-const char* kFragmentSrc = R"(
-#version 410 core
-in vec3 vNormal;
-in vec3 vColor;
-out vec4 FragColor;
-
-uniform vec3 uLightDir;
-
-void main() {
-    vec3 n = normalize(vNormal);
-    float diff = max(dot(n, normalize(-uLightDir)), 0.0);
-    vec3 c = vColor * (0.3 + 0.7 * diff);
-    FragColor = vec4(c, 1.0);
-}
-)";
-
-} // namespace
 
 void CubeExercise::setup() {
     shader_ = std::make_unique<Shader>();
-    shader_->compile(kVertexSrc, kFragmentSrc);
+    loadShader(*shader_, "cube"); // Shaders/cube.vert + .frag
     cube_ = Mesh::createCube();
 
     sceneCamera.position = glm::vec3(0.0f, 0.8f, 3.0f);
