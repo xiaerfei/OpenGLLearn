@@ -1,0 +1,58 @@
+name: LearnOpenGL
+
+options:
+  bundleIdPrefix: sharexia
+  deploymentTarget:
+    macOS: "26.2"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+# 全工程通用设置：开启 OpenGL 弃用静默 + C++20 / C17，匹配原模板
+settings:
+  base:
+    CLANG_CXX_LANGUAGE_STANDARD: "gnu++20"
+    GCC_C_LANGUAGE_STANDARD: gnu17
+    CLANG_ENABLE_OBJC_ARC: true
+    CLANG_ENABLE_MODULES: true
+    GCC_PREPROCESSOR_DEFINITIONS:
+      - "$(inherited)"
+      - "GL_SILENCE_DEPRECATION=1"
+
+targets:
+  LearnOpenGL:
+    type: application
+    platform: macOS
+    deploymentTarget: "26.2"
+    sources:
+      - path: LearnOpenGL
+    dependencies:
+      - sdk: OpenGL.framework
+      - sdk: CoreVideo.framework
+    settings:
+      base:
+        # vendored glm 以 -isystem 引入：可 #include <glm/glm.hpp> 且屏蔽其内部告警
+        OTHER_CPLUSPLUSFLAGS:
+          - "$(inherited)"
+          - "-isystem"
+          - "$(SRCROOT)/ThirdParty"
+        # 让 Core/ 与 Exercises/ 的头文件可跨目录按文件名 #include
+        HEADER_SEARCH_PATHS:
+          - "$(inherited)"
+          - "$(SRCROOT)/LearnOpenGL/Core"
+          - "$(SRCROOT)/LearnOpenGL/Exercises"
+        PRODUCT_BUNDLE_IDENTIFIER: sharexia.LearnOpenGL
+        DEVELOPMENT_TEAM: UG4W2B7XPD
+        CODE_SIGN_STYLE: Automatic
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: 1
+        GENERATE_INFOPLIST_FILE: true
+        INFOPLIST_KEY_NSMainStoryboardFile: Main
+        INFOPLIST_KEY_NSPrincipalClass: NSApplication
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        COMBINE_HIDPI_IMAGES: true
+        ENABLE_HARDENED_RUNTIME: true
+        LD_RUNPATH_SEARCH_PATHS:
+          - "$(inherited)"
+          - "@executable_path/../Frameworks"
