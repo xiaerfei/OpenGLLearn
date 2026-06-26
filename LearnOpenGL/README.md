@@ -43,30 +43,35 @@ LearnOpenGL/
 ├── project.yml                 # XcodeGen 配置（唯一工程来源）
 ├── bootstrap.sh                # 一键生成工程并打开
 ├── ThirdParty/glm/             # vendored glm（-isystem 引入）
-├── Shaders/                    # ★ GLSL 着色器（打入 bundle，运行时加载）
-│   ├── hello_triangle.vert/.frag
-│   ├── cube.vert/.frag
-│   └── line.vert/.frag         # DebugDraw 用
 └── LearnOpenGL/
     ├── Core/                   # 可复用底层组件，写练习时一般不用动
     │   ├── GLView.{h,mm}       # 4.1 Core 上下文 + 渲染循环 + 输入
     │   ├── Shader.{hpp,cpp}    # 着色器编译/链接/uniform（纯 C++）
-    │   ├── ShaderLibrary.{hpp,mm}  # 从 bundle Shaders/ 加载着色器文件
+    │   ├── ShaderLibrary.{hpp,mm}  # 按名字从 bundle 加载 .vert/.frag
     │   ├── Mesh.{hpp,cpp}      # VAO/VBO/EBO 封装 + 内置图元
     │   ├── Camera.{hpp,cpp}    # 透视相机
     │   ├── OrbitCamera.{hpp,cpp}        # 观察者轨道相机
     │   ├── DebugDraw.{hpp,cpp}          # 线框：网格/坐标轴/视锥体
+    │   ├── line.vert / line.frag        # DebugDraw 用的框架着色器
     │   ├── DualViewportRenderer.{hpp,cpp}  # 左右双视角编排
     │   └── Exercise.hpp        # 练习基类接口
-    └── Exercises/              # ★ 你在这里写练习
+    └── Exercises/              # ★ 你在这里写练习：每个 demo 一个文件夹
         ├── ExerciseRegistry.{hpp,cpp}  # 练习注册表（加练习改这里）
-        ├── HelloTriangleExercise.{hpp,cpp}  # 手动 VBO/VAO 的入门模板
-        └── CubeExercise.{hpp,cpp}           # 用 Mesh 辅助类的模板
+        ├── HelloTriangle/      # 手动 VBO/VAO 的入门模板
+        │   ├── HelloTriangleExercise.{hpp,cpp}
+        │   └── hello_triangle.vert / .frag
+        └── Cube/               # 用 Mesh 辅助类的模板
+            ├── CubeExercise.{hpp,cpp}
+            └── cube.vert / .frag
 ```
+
+> 着色器在源码树里按 demo 分组便于识别；构建时所有 `.vert/.frag` 会被扁平拷入 app bundle，
+> 因此 `loadShader` 按文件名查找——**文件名需全局唯一**（如带 demo 前缀）。
 
 ## 写一个新练习
 
-1. 在 `Exercises/` 新建 `XxxExercise.{hpp,cpp}`，继承 `Exercise`：
+1. 在 `Exercises/` 下新建一个 demo 文件夹 `Xxx/`，放该练习的全部文件：
+   `XxxExercise.{hpp,cpp}` + `xxx.vert` + `xxx.frag`。`XxxExercise` 继承 `Exercise`：
 
    ```cpp
    class XxxExercise : public Exercise {
@@ -76,14 +81,12 @@ LearnOpenGL/
    };
    ```
 
-   在 `setup()` 里顺便设好 `sceneCamera`（位置/朝向）—— 左侧观察者会自动画出它的视锥体。
+   在 `setup()` 里用 `loadShader(shader_, "xxx")` 加载着色器（按文件名找 `xxx.vert`/`xxx.frag`），
+   并设好 `sceneCamera`（位置/朝向）—— 左侧观察者会自动画出它的视锥体。
 
-2. 在 `Shaders/` 放着色器文件（如 `xxx.vert` / `xxx.frag`），在 `setup()` 里用
-   `loadShader(shader_, "xxx")` 加载（会自动找 `Shaders/xxx.vert` + `.frag`）。
+2. 在 `ExerciseRegistry.cpp` 里 `#include` 你的头文件，并往列表加一行 `{"名称", 工厂}`。
 
-3. 在 `ExerciseRegistry.cpp` 里 `#include` 你的头文件，并往列表加一行 `{"名称", 工厂}`。
-
-4. `xcodegen generate` 重新生成，运行后用下拉框或数字键切到你的练习。
+3. `xcodegen generate` 重新生成，运行后用下拉框或数字键切到你的练习。
 
 > 对照 learnopengl-cn 写代码时，几乎可以 1:1 照抄网站的 C++（glm + GLSL）；
 > 唯一约定：物体放进世界空间、在 `render` 里用传入的 `camera` 的 `view()/projection()` 变换，
