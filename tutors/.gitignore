@@ -1,0 +1,12 @@
+# 旧编译产物（2007 PPC/i386 通用二进制，现已无法运行），仅保留源码与资源作参考
+/fog
+/lightmaterial
+/lightposition
+/projection
+/shapes
+/texture
+/transformation
+
+# Make 中间产物
+*.o
+*.d
