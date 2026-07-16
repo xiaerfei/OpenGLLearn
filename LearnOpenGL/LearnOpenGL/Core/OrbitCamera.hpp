@@ -23,9 +23,20 @@ public:
     void orbit(float dYawDegrees, float dPitchDegrees);
     void zoom(float dDistance);
 
+    // 平滑过渡：修改目标值，update() 每帧插值过去
+    void orbitTarget(float dYawDegrees, float dPitchDegrees);
+    void zoomTarget(float dDistance);
+    void update(float dt);
+
     // 设置好 aspect 后产出可直接取 view/projection 的相机。
     Camera toCamera(float aspect) const;
 
 private:
     glm::vec3 computePosition() const;
+
+    float targetYaw_ = -35.0f;
+    float targetPitch_ = 22.0f;
+    float targetDistance_ = 6.0f;
+    bool hasTarget_ = false;
+    static constexpr float kSmoothSpeed = 8.0f;
 };

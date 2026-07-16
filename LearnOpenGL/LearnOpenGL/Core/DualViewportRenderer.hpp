@@ -18,6 +18,7 @@ class Exercise;
 class DualViewportRenderer {
 public:
     void setup(); // 上下文就绪后调用
+    void update(float dt); // 每帧调用，驱动平滑插值
 
     // pixelW/pixelH：整个视图的像素尺寸。内部分割左右并各渲染一次 exercise。
     void render(int pixelW, int pixelH, Exercise& exercise);
@@ -26,6 +27,8 @@ public:
     void onDrag(float dxPixels, float dyPixels);
     void onScroll(float deltaY);            // 鼠标滚轮 / 双指滑动
     void onPinch(float magnification);      // 触控板双指捏合
+    void onKeyZoom(bool zoomIn);            // 上下箭头：精细缩放
+    void onKeyOrbit(bool right);            // 左右箭头：精细旋转
 
     OrbitCamera& observer() { return observer_; }
 

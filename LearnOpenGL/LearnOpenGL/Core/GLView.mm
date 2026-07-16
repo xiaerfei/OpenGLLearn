@@ -120,6 +120,7 @@ static CVReturn GLViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
     _lastTime = now;
 
     _exercise->update(dt, time);
+    _renderer->update(dt);
     _renderer->render(_vpWidth, _vpHeight, *_exercise);
 
     [context flushBuffer];
@@ -197,6 +198,17 @@ static CVReturn GLViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
             return;
         }
     }
+
+    if (_renderer) {
+        switch (event.keyCode) {
+            case 126: _renderer->onKeyZoom(true);  return; // ↑
+            case 125: _renderer->onKeyZoom(false); return; // ↓
+            case 123: _renderer->onKeyOrbit(false); return; // ←
+            case 124: _renderer->onKeyOrbit(true);  return; // →
+            default: break;
+        }
+    }
+
     [super keyDown:event];
 }
 

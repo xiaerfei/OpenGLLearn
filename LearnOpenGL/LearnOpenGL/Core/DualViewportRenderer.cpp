@@ -16,18 +16,32 @@ void DualViewportRenderer::setup() {
     ready_ = true;
 }
 
+void DualViewportRenderer::update(float dt) {
+    observer_.update(dt);
+}
+
 void DualViewportRenderer::onDrag(float dxPixels, float dyPixels) {
     // 横向拖拽改 yaw，纵向拖拽改 pitch；系数调成手感自然
     observer_.orbit(-dxPixels * 0.3f, dyPixels * 0.3f);
 }
 
 void DualViewportRenderer::onScroll(float deltaY) {
-    observer_.zoom(-deltaY * 0.3f);
+    observer_.zoom(-deltaY * 0.002f * observer_.distance);
 }
 
 void DualViewportRenderer::onPinch(float magnification) {
     // magnification 为本次手势增量（捏合<0，张开>0）。按当前距离比例缩放，手感更自然。
     observer_.zoom(-magnification * observer_.distance);
+}
+
+void DualViewportRenderer::onKeyZoom(bool zoomIn) {
+    float step = 0.01f * observer_.distance;
+    observer_.zoomTarget(zoomIn ? -step : step);
+}
+
+void DualViewportRenderer::onKeyOrbit(bool right) {
+    float step = 0.1f;
+    observer_.orbitTarget(right ? step : -step, 0.0f);
 }
 
 void DualViewportRenderer::render(int pixelW, int pixelH, Exercise& exercise) {
