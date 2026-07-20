@@ -36,6 +36,9 @@ double hostSeconds() {
     std::unique_ptr<Exercise> _exercise;
     double _startTime;
     double _lastTime;
+
+    // 游戏式移动按键状态（魔兽世界布局），keyDown 置位 / keyUp 清除
+    BOOL _keyW, _keyS, _keyQ, _keyE, _keyA, _keyD;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
@@ -177,9 +180,15 @@ static CVReturn GLViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 }
 
 - (void)scrollWheel:(NSEvent *)event {
-    if (_renderer) {
-        _renderer->onScroll((float)event.scrollingDeltaY);
+    if (!_renderer) {
+        return;
     }
+    // 触控板松手后系统还会发 1~2 秒衰减的惯性滚动事件（momentum），
+    // 叠加在插值尾巴上就是松手后仍在"飘"。直接忽略，松手即停。
+    if (event.momentumPhase != NSEventPhaseNone) {
+        return;
+    }
+    _renderer->onScroll((float)event.scrollingDeltaY);
 }
 
 // 触控板双指捏合（与 scrollWheel 是不同的事件类型）
@@ -189,7 +198,38 @@ static CVReturn GLViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
     }
 }
 
+// 按键状态合成每轴 -1/0/+1 传给渲染器，update() 每帧按 dt 推进
+- (void)pushMovementInput {
+    if (!_renderer) {
+        return;
+    }
+    const float strafe  = (_keyE ? 1.0f : 0.0f) - (_keyQ ? 1.0f : 0.0f);
+    const float forward = (_keyW ? 1.0f : 0.0f) - (_keyS ? 1.0f : 0.0f);
+    const float turn    = (_keyA ? 1.0f : 0.0f) - (_keyD ? 1.0f : 0.0f); // yaw 增加 = 左转
+    _renderer->setMovementInput(strafe, forward, turn);
+}
+
+// 用 keyCode（物理键位）而非字符，切输入法/大小写不影响；返回 NO 表示不是移动键
+- (BOOL)handleMovementKey:(NSEvent *)event isDown:(BOOL)down {
+    switch (event.keyCode) {
+        case 12: _keyQ = down; break; // Q 左平移
+        case 14: _keyE = down; break; // E 右平移
+        case 13: _keyW = down; break; // W 前进
+        case 1:  _keyS = down; break; // S 后退
+        case 0:  _keyA = down; break; // A 左转
+        case 2:  _keyD = down; break; // D 右转
+        default: return NO;
+    }
+    [self pushMovementInput];
+    return YES;
+}
+
 - (void)keyDown:(NSEvent *)event {
+    // 系统按住重复的 keyDown 直接吞掉：状态已置位，重复事件只会打扰
+    if ([self handleMovementKey:event isDown:YES]) {
+        return;
+    }
+
     NSString *characters = event.charactersIgnoringModifiers;
     if (characters.length == 1) {
         unichar c = [characters characterAtIndex:0];
@@ -210,6 +250,20 @@ static CVReturn GLViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
     }
 
     [super keyDown:event];
+}
+
+- (void)keyUp:(NSEvent *)event {
+    if ([self handleMovementKey:event isDown:NO]) {
+        return;
+    }
+    [super keyUp:event];
+}
+
+// 失焦时清空按键状态，避免按住期间切走导致"卡键"持续移动
+- (BOOL)resignFirstResponder {
+    _keyW = _keyS = _keyQ = _keyE = _keyA = _keyD = NO;
+    [self pushMovementInput];
+    return [super resignFirstResponder];
 }
 
 #pragma mark - 尺寸变化

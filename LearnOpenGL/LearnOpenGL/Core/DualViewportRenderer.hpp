@@ -30,10 +30,19 @@ public:
     void onKeyZoom(bool zoomIn);            // 上下箭头：精细缩放
     void onKeyOrbit(bool right);            // 左右箭头：精细旋转
 
+    // 游戏式移动（魔兽世界布局）：W/S 前后、Q/E 平移、A/D 转身。
+    // 主线程把按键状态合成每轴 -1/0/+1 传入，update() 按 dt 持续推进。
+    void setMovementInput(float strafe, float forward, float turn);
+
     OrbitCamera& observer() { return observer_; }
 
 private:
     OrbitCamera observer_;
     DebugDraw debug_;
     bool ready_ = false;
+
+    // 移动输入（主线程写，渲染线程读）
+    float inputStrafe_ = 0.0f;   // +右 -左
+    float inputForward_ = 0.0f;  // +前 -后
+    float inputTurn_ = 0.0f;     // +左转 -右转（yaw 增加 = 视野向左扫）
 };

@@ -8,55 +8,59 @@
 #include <algorithm>
 #include <cmath>
 
+namespace {
+
+constexpr float kPitchLimit = 89.0f;
+constexpr float kMinDistance = 0.5f;
+constexpr float kMaxDistance = 100.0f;
+
+// 帧率无关的指数趋近系数：dt 波动时收敛速度恒定，dt 很大时直接到位。
+float smoothAlpha(float speed, float dt) {
+    return 1.0f - std::exp(-speed * dt);
+}
+
+} // namespace
+
 void OrbitCamera::orbit(float dYawDegrees, float dPitchDegrees) {
     yaw += dYawDegrees;
-    pitch = std::clamp(pitch + dPitchDegrees, -89.0f, 89.0f);
+    pitch = std::clamp(pitch + dPitchDegrees, -kPitchLimit, kPitchLimit);
     targetYaw_ = yaw;
     targetPitch_ = pitch;
-    targetDistance_ = distance;
 }
 
 void OrbitCamera::zoom(float dDistance) {
-    distance = std::clamp(distance + dDistance, 0.5f, 100.0f);
+    distance = std::clamp(distance + dDistance, kMinDistance, kMaxDistance);
     targetDistance_ = distance;
-    targetYaw_ = yaw;
-    targetPitch_ = pitch;
 }
 
 void OrbitCamera::orbitTarget(float dYawDegrees, float dPitchDegrees) {
-    if (!hasTarget_) {
-        targetYaw_ = yaw;
-        targetPitch_ = pitch;
-        targetDistance_ = distance;
-        hasTarget_ = true;
-    }
     targetYaw_ += dYawDegrees;
-    targetPitch_ = std::clamp(targetPitch_ + dPitchDegrees, -89.0f, 89.0f);
+    targetPitch_ = std::clamp(targetPitch_ + dPitchDegrees, -kPitchLimit, kPitchLimit);
 }
 
-void OrbitCamera::zoomTarget(float dDistance) {
-    if (!hasTarget_) {
-        targetYaw_ = yaw;
-        targetPitch_ = pitch;
-        targetDistance_ = distance;
-        hasTarget_ = true;
-    }
-    targetDistance_ = std::clamp(targetDistance_ + dDistance, 0.5f, 100.0f);
+void OrbitCamera::zoomTargetScale(float factor) {
+    targetDistance_ = std::clamp(targetDistance_ * factor, kMinDistance, kMaxDistance);
 }
 
 void OrbitCamera::update(float dt) {
-    if (!hasTarget_) return;
-    float t = 1.0f - std::exp(-kSmoothSpeed * dt);
-    yaw += (targetYaw_ - yaw) * t;
-    pitch += (targetPitch_ - pitch) * t;
-    distance += (targetDistance_ - distance) * t;
-    if (std::abs(yaw - targetYaw_) < 0.001f &&
-        std::abs(pitch - targetPitch_) < 0.001f &&
-        std::abs(distance - targetDistance_) < 0.001f) {
-        yaw = targetYaw_;
-        pitch = targetPitch_;
+    if (dt <= 0.0f) {
+        return;
+    }
+
+    // 残差低于亚像素量级就直接吸附停住：收敛尾巴的缓慢蠕动近距离下会被察觉为"飘"
+    const float orbitA = smoothAlpha(kOrbitSmoothSpeed, dt);
+    yaw += (targetYaw_ - yaw) * orbitA;
+    pitch += (targetPitch_ - pitch) * orbitA;
+    if (std::abs(targetYaw_ - yaw) < 2e-3f) yaw = targetYaw_;
+    if (std::abs(targetPitch_ - pitch) < 2e-3f) pitch = targetPitch_;
+
+    // 距离在对数空间插值：缩放全程等比推进，近处不会"急刹"。
+    // 吸附阈值同样在对数域（相对 0.05%），近处远处的感知一致。
+    const float logDiff = std::log(targetDistance_ / distance);
+    if (std::abs(logDiff) < 5e-4f) {
         distance = targetDistance_;
-        hasTarget_ = false;
+    } else {
+        distance *= std::exp(logDiff * smoothAlpha(kZoomSmoothSpeed, dt));
     }
 }
 
